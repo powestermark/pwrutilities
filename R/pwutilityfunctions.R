@@ -1,15 +1,5 @@
 # Misc. initializers ------------------------------------------------------
 
-#' Loads biocLite() from bioconductor.org
-#'
-#' @return NULL Called for side effect
-#' @export
-#'
-sourcebioc <- function () {
-  source("https://bioconductor.org/biocLite.R")
-}
-
-
 
 mygetmousemart <- function() {
   mart <- biomaRt::useMart("ENSEMBL_MART_ENSEMBL",
