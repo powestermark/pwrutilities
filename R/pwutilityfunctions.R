@@ -588,6 +588,7 @@ pw_theme_lattice_modern <-
   ggplot2::theme(
     legend.position = "top", legend.justification = "right",
     legend.title = ggplot2::element_text(face = "bold"),
+    legend.box.just = "center",
     plot.title = ggplot2::element_text(face = "bold"),
     strip.background = ggplot2::element_rect(fill = "gray93", color = NA),
     panel.spacing.y = ggplot2::unit(1, "mm")
