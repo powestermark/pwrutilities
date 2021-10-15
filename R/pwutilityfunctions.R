@@ -585,11 +585,13 @@ pw_phase_theme <- pw_theme +
 
 pw_theme_lattice_modern <-
   pw_theme_lattice +
-  theme(legend.position = "top", legend.justification = "right",
-        legend.title = element_text(face = "bold"),
-        plot.title = element_text(face = "bold"),
-        strip.background = element_rect(fill = "gray93", color = NA),
-        panel.spacing.y = unit(1, "mm"))
+  ggplot2::theme(
+    legend.position = "top", legend.justification = "right",
+    legend.title = ggplot2::element_text(face = "bold"),
+    plot.title = ggplot2::element_text(face = "bold"),
+    strip.background = ggplot2::element_rect(fill = "gray93", color = NA),
+    panel.spacing.y = ggplot2::unit(1, "mm")
+  )
 
 
 
