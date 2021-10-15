@@ -583,6 +583,16 @@ pw_phase_theme <- pw_theme +
                                       margin=ggplot2::
                                         margin(0, 1, 0, 1, unit="cm")))
 
+pw_theme_lattice_modern <-
+  pw_theme_lattice +
+  theme(legend.position = "top", legend.justification = "right",
+        legend.title = element_text(face = "bold"),
+        plot.title = element_text(face = "bold"),
+        strip.background = element_rect(fill = "gray93", color = NA),
+        panel.spacing.y = unit(1, "mm"))
+
+
+
 
 
 # ggplot: Log 10 scales ---------------------------------------------------
