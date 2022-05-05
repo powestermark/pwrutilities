@@ -1268,6 +1268,13 @@ m2me <- function (mgisyms) {
     as_tibble %>% rlang::set_names("mgi_symbol", "entrez_id")
 }
 
+a2ae <- function (mgisyms) {
+  AnnotationDbi::select(org.Mm.eg.db::org.Mm.eg.db, keys=mgisyms,
+                        keytype="ALIAS",
+                        columns=c("ALIAS", "ENTREZID")) %>%
+    as_tibble %>% rlang::set_names("alias", "entrez_id")
+}
+
 
 m2ens <- function (mgisyms) {
   df <- AnnotationDbi::select(org.Mm.eg.db::org.Mm.eg.db, keys=mgisyms,
