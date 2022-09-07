@@ -1454,6 +1454,40 @@ keepsyn <- function (ttab) {
 }
 
 
+#' Search Entrez IDs for gene names that are not necessarily MGI symbols
+#'
+#' @param gene_names Character vector of gene names
+#'
+#' @return Data frame (tibble) with columns "alias" and "entrez_id" for unique
+#'   matches
+#' @export
+#'
+#' @examples
+#' gene_names_to_entrez(c("Bmal1", "Ciart", "Chrono"))
+gene_names_to_entrez <- function (gene_names) {
+  if (any(duplicated(gene_names))) {
+    warning("Duplicated input names will be removed")
+    gene_names <- unique(gene_names)
+  }
+  alias_full <- try(
+    suppressMessages(a2ae(gene_names)),
+    silent = TRUE
+  )
+  # Handle case when no gene names are found
+  select_err <- "None of the keys entered are valid keys"
+  if (isa(alias_full, "try-error")) {
+    if (stringr::str_detect(alias_full, select_err)) {
+      alias_full <- tibble(alias = gene_names, entrez_id = NA)
+    } else {
+      stop("Invalid input")
+    }
+  }
+  # We only keep unambiguous aliases (occurring once in the translation table)
+  alias_full %>%
+    group_by(alias) %>%
+    dplyr::filter(n() == 1L)
+}
+
 
 # Stats -------------------------------------------------------------------
 
