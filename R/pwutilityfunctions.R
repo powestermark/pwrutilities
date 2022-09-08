@@ -1488,16 +1488,11 @@ gene_names_to_entrez <- function (gene_names) {
     dplyr::filter(n() == 1L)
 }
 
-# Helper function: removes part of element of larger named list ganz_vec that
+# Helper function: removes part of element of larger named list full_list that
 # occur in any other elements (For use with imap() or mapply())
-list_element_reducer <- function (el, nom, ganz_vec) {
-  if (length(el) > 1L) {
-    rest_vec <- ganz_vec[setdiff(names(ganz_vec), nom)]
-    all_others <- unique(unlist(rest_vec))
-    return(setdiff(el, all_others))
-  } else {
-    return(el)
-  }
+list_element_reducer <- function (el, el_name, full_list) {
+  rest_list <- full_list[setdiff(names(full_list), el_name)]
+  setdiff(el, unique(unlist(rest_list)))
 }
 
 
@@ -1507,7 +1502,7 @@ list_element_reducer <- function (el, nom, ganz_vec) {
 #' other. We may then remove entries in multiple-entry elements that occur in
 #' 1-entry elements - these are likely mis-assigned annotations.
 #' @param gene_table Data frame
-#' @param id1 Column name to split (unquoted)
+#' @param id1 Name of column to split (unquoted)
 #' @param id2 Index column for the split
 #'
 #' @return Reduced data frame
@@ -1525,12 +1520,15 @@ reduce_gene_table_ambiguity <- function (gene_table, id1, id2) {
     split(eval(arg1), eval(arg2))
   )
 
-  reduced_df <- purrr::imap(
-    mapping_list,
-    list_element_reducer,
-    mapping_list
+  len1_list <- mapping_list[lengths(mapping_list) == 1L]
+  len1_list_elements <- unique(unlist(len1_list))
+  toreduce_list <- mapping_list[lengths(mapping_list) > 1L]
+  reduced_list <- purrr::map(
+    toreduce_list,
+    ~ setdiff(.x, len1_list_elements)
   )
-  stack(reduced_df) %>%
+
+  stack(c(len1_list, reduced_list)) %>%
     purrr::set_names(as.character(c(arg1, arg2)))
 }
 
