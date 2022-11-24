@@ -262,6 +262,32 @@ shifter <- function (vec, n=1L) {
 }
 
 
+#' Create inverse function
+#'
+#' From
+#' https://stackoverflow.com/questions/45616072/find-the-inverse-function-in-r
+#'
+#' @param fn Monotonous function
+#' @param interval Vector defining the domain
+#' @param lower Numeric, inferred from interval or given explicitly here
+#' @param upper Numeric, inferred from interval or given explicitly here
+#' @param ... Further parameters to uniroot()
+#'
+#' @return Function (vectorized) computing the inverse of fn
+#' @export
+#'
+#' @examples
+#' x <- 1:10
+#' y <- sqrt(x)
+#' sqrt.inv <- inverse(sqrt, lower = 1, upper = 10)
+#' sqrt.inv(y)
+inverse <- function(fn, interval = NULL, lower = min(interval),
+                    upper = max(interval), ...) {
+  Vectorize(function(y) {
+    uniroot(f = function(x) {fn(x) - y}, lower = lower, upper = upper, ...)$root
+  })
+}
+
 
 
 # Matrix utilities --------------------------------------------------------
