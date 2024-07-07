@@ -1,7 +1,7 @@
 Package: pwrutilities
 Type: Package
 Title: Various Westermark Utility Functions
-Version: 0.1.0
+Version: 0.1.1
 Author: Paal O. Westermark
 Maintainer: Paal O. Westermark <westermark@fbn-dummerstorf.de>
 Description: Various utility functions for R scripting code by Westermark.
