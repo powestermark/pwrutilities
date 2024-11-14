@@ -16,6 +16,7 @@ Imports:
   metap,
   plotrix,
   gtools,
+  gdata,
   qvalue,
   org.Mm.eg.db,
   AnnotationDbi

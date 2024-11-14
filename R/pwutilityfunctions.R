@@ -352,6 +352,39 @@ compute.matrix.ratios <- function (mat1, mat2) {
 
 m.head <- function (mat, n=6) mat[1:min(nrow(mat), n), 1:min(ncol(mat), n)]
 
+#' Interleave columns of a matrix based on specified column indices
+#' @param matrix_data matrix to interleave
+#' @param ... column index vectors to extract and interleave
+#' @param use_columns logical, whether to transpose the matrix before and after,
+#'  i.e., operate on columns instead of rows
+#'  
+#' @return Interleaved matrix
+#' 
+#' @export
+#' @examples
+#' a <- matrix(1:8, ncol = 4)
+#' interleave_index(a, 1:2, 3:4)
+#' 
+interleave_index <- function(matrix_data, ..., along_columns = TRUE) {
+  # Capture column index vectors
+  column_groups <- list(...)
+  
+  # Extract specified columns based on the vectors provided
+  extracted_columns <- lapply(column_groups, function(cols) matrix_data[, cols])
+  
+  if (along_columns) {
+    # Transpose each extracted matrix, apply interleave row-wise, then transpose
+    # back
+    interleaved_matrix <- t(do.call(gdata::interleave,
+                                    lapply(extracted_columns, t)))
+  } else {
+    # Apply interleave directly to the columns without transposing
+    interleaved_matrix <- do.call(gdata::interleave, extracted_columns)
+  }
+  
+  interleaved_matrix
+}
+
 
 
 
