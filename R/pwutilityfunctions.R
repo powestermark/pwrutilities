@@ -381,7 +381,9 @@ interleave_segments <- function(matrix_data, ..., use_columns = TRUE) {
   
   if (use_columns) {
     # Transpose for column interleaving
-    interleaved_matrix <- t(do.call(gdata::interleave, lapply(extracted_segments, t)))
+    interleaved_matrix <- t(
+      do.call(gdata::interleave, lapply(extracted_segments, t))
+    )
   } else {
     # Directly interleave rows
     interleaved_matrix <- do.call(gdata::interleave, extracted_segments)
@@ -390,6 +392,35 @@ interleave_segments <- function(matrix_data, ..., use_columns = TRUE) {
   return(interleaved_matrix)
 }
 
+
+#' Calculate Empirical False Discovery Rate (FDR)
+#'
+#' This function computes the empirical false discovery rate (FDR) for a given
+#' set of p-values or similar scores, assuming a subset of indices represent
+#' true null hypotheses.
+#'
+#' @param val A numeric vector of p-values or test statistics.
+#' @param true_null_indices A numeric vector of indices indicating the positions
+#'   in \code{val} that correspond to true null hypotheses.
+#' @param ... Further arguments to \code{order()}; typically use
+#'   \code{decreasing = TRUE} if supplying test statistics.
+#' @return A numeric vector of FDR values corresponding to each threshold in the
+#'   sorted \code{val}.
+#' @details The FDR is computed as the cumulative count of true nulls up to a
+#'   given rank, divided by the rank itself. The function returns values sorted
+#'   in ascending order.
+#'
+#' @examples
+#' set.seed(123)
+#' val <- runif(10)  # Generate 10 random uniform values
+#' true_null_indices <- c(3, 6, 8)  # Indices of true nulls
+#' empirical_fdr(val, true_null_indices)
+#'
+#' @export
+empirical_fdr <- function(val, true_null_indices, ...) {
+  is_true_null <- seq_along(val) %in% true_null_indices
+  cumsum(is_true_null[order(val, ...)])/seq_along(val)
+}
 
 
 # Circular helpers --------------------------------------------------------
