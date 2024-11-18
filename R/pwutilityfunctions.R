@@ -352,40 +352,43 @@ compute.matrix.ratios <- function (mat1, mat2) {
 
 m.head <- function (mat, n=6) mat[1:min(nrow(mat), n), 1:min(ncol(mat), n)]
 
-#' Interleave columns of a matrix based on specified column indices
-#' @param matrix_data matrix to interleave
-#' @param ... column index vectors to extract and interleave
-#' @param use_columns logical, whether to transpose the matrix before and after,
-#'  i.e., operate on columns instead of rows
+#' Interleave segments of a matrix based on specified indices
+#'
+#' @param matrix_data A matrix to interleave
+#' @param ... Index vectors to extract segments (columns or rows) to interleave
+#' @param use_columns Logical, whether to operate on columns. If TRUE, the 
+#' matrix is transposed before and after interleaving.
 #'  
 #' @return Interleaved matrix
 #' 
 #' @export
 #' @examples
 #' a <- matrix(1:8, ncol = 4)
-#' interleave_index(a, 1:2, 3:4)
-#' 
-interleave_index <- function(matrix_data, ..., along_columns = TRUE) {
-  # Capture column index vectors
-  column_groups <- list(...)
+#' interleave_segments(a, 1:2, 3:4, use_columns = TRUE)
+#' interleave_segments(a, 1:2, 3:4, use_columns = FALSE)
+interleave_segments <- function(matrix_data, ..., use_columns = TRUE) {
+  # Capture index vectors
+  segment_indices <- list(...)
   
-  # Extract specified columns based on the vectors provided
-  extracted_columns <- lapply(column_groups, function(cols) matrix_data[, cols])
+  # Extract specified segments based on the indices provided
+  extracted_segments <- lapply(segment_indices, function(indices) {
+    if (use_columns) {
+      matrix_data[, indices]
+    } else {
+      matrix_data[indices, ]
+    }
+  })
   
-  if (along_columns) {
-    # Transpose each extracted matrix, apply interleave row-wise, then transpose
-    # back
-    interleaved_matrix <- t(do.call(gdata::interleave,
-                                    lapply(extracted_columns, t)))
+  if (use_columns) {
+    # Transpose for column interleaving
+    interleaved_matrix <- t(do.call(gdata::interleave, lapply(extracted_segments, t)))
   } else {
-    # Apply interleave directly to the columns without transposing
-    interleaved_matrix <- do.call(gdata::interleave, extracted_columns)
+    # Directly interleave rows
+    interleaved_matrix <- do.call(gdata::interleave, extracted_segments)
   }
   
-  interleaved_matrix
+  return(interleaved_matrix)
 }
-
-
 
 
 
