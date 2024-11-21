@@ -518,9 +518,9 @@ analyze_zt <- function(timepoints) {
   reps <- as.vector(table(tps_sorted))
   
   # Unique modulo 24 time points
-  unique_mod24 <- sort(unique(tps_mod24_sorted))
+  tps_unique_mod24 <- sort(unique(tps_mod24_sorted))
   # Total number of unique time points  within a 24-hour period
-  n_unique_mod24 <- length(unique_mod24)
+  n_unique_mod24 <- length(tps_unique_mod24)
   
   # Replicates per unique time point modulo 24
   reps_mod24 <- as.vector(table(tps_mod24_sorted))
@@ -530,20 +530,16 @@ analyze_zt <- function(timepoints) {
   balanced_reps <- length(reps_mod24_uniq) == 1L
   
   # Check if intervals modulo 24 are equidistant
-  mod24_intervals <- diff(c(unique_mod24, unique_mod24[1])) %% 24
+  mod24_intervals <- diff(c(tps_unique_mod24, tps_unique_mod24[1])) %% 24
   balanced_intervals <- length(unique(mod24_intervals)) == 1
   
   # Check for even distribution in 24-hour cycle
   omega <- pi/12
-  sin_cos_sum <- sum(sin(omega*unique_mod24)*cos(omega*unique_mod24))
+  sin_cos_sum <- sum(sin(omega*tps_unique_mod24)*cos(omega*tps_unique_mod24))
   balanced_dist <- abs(sin_cos_sum) < 1e-10
   
   # Overall balance check
   balanced <- balanced_reps && balanced_intervals && balanced_dist
-  
-  # Unique sampling intervals
-  sampling_intervals <- diff(tps_unique)
-  unique_intervals <- unique(sampling_intervals)
   
   # Return results
   structure(
@@ -564,7 +560,8 @@ analyze_zt <- function(timepoints) {
       
       # this is also needed for JTK, and we measure period by normalizing to 
       # this
-      sampling_int_uniq = unique_intervals,
+      sampling_int_uniq = unique(diff(tps_unique)),
+      sampling_int_mod24_uniq = unique(mod24_intervals),
       
       tps_sorted = tps_sorted,
       tps_mod24_sorted = tps_mod24_sorted,
@@ -579,20 +576,21 @@ analyze_zt <- function(timepoints) {
   )
 }
 
-#' @export
 print.zt_analysis <- function(x, ...) {
   cat("\n")
-  cat("\t\tZeitgeber Time Analysis:\n")
+  cat("\t\tZeitgeber time analysis:\n")
   cat("\t\t------------------------\n")
   cat("\n")
-  cat("Total Time Points: ", x$n_points, "\n")
-  cat("Spanning time points", paste0(x$tspan[1], x$tspan[2], sep = "-"), "\n")
-  cat("Unique Time Points: ", x$n_uniq, "\n")
-  cat("Replicates per Unique Time Point: ", 
+  cat("Total time points: ", x$n_points, "\n")
+  cat("Spanning time points: ", paste(x$tspan, collapse = " - "), "\n")
+  cat("Unique time points: ", x$n_uniq, "\n")
+  cat("Replicates per unique time point: ", 
       paste(x$reps, collapse = ", "), "\n")
-  cat("Unique Sampling Intervals: ", 
+  cat("Unique sampling intervals: ", 
       paste(x$sampling_int_uniq, collapse = ", "), "\n")
-  cat("Balanced Design: ", ifelse(x$balanced, "Yes", "No"), "\n")
+  cat("Unique sampling intervals mod 24 (wrapped): ", 
+      paste(x$sampling_int_mod24_uniq, collapse = ", "), "\n")
+  cat("Balanced design: ", ifelse(x$balanced, "Yes", "No"), "\n")
   invisible(x)  # Ensure the object is returned invisibly
 }
 

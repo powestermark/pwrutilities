@@ -1,3 +1,5 @@
 exportPattern("^[[:alpha:]]+")
 
+S3method(print, zt_analysis)
+
 import(magrittr, stats, grDevices, graphics)
