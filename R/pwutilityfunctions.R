@@ -425,6 +425,175 @@ empirical_fdr <- function(val, true_null_indices, ...) {
 
 # Circular helpers --------------------------------------------------------
 
+#' Analyze Zeitgeber Time Points
+#'
+#' This function analyzes a vector of time points and computes various metrics
+#' related to periodic sampling. It handles both absolute and modulo-24 time
+#' representations, making it suitable for circadian rhythm analyses.
+#'
+#' @param timepoints A numeric vector of time points to analyze.
+#'
+#' @return An object of class \code{zt_analysis} containing the following 
+#' elements:
+#' \describe{
+#'   \item{n_points}{The total number of time points.}
+#'   \item{n_uniq}{The number of unique time points (sorted).}
+#'   \item{reps}{A vector indicating the number of replicates per unique time 
+#'   point (sorted).}
+#'   \item{reps_uniq}{A vector of unique replicate counts across all time 
+#'   points.}
+#'   \item{n_unique_mod24}{The number of unique time points within a 24-hour 
+#'   cycle.}
+#'   \item{reps_mod24}{A vector of replicate counts per unique time point 
+#'   modulo 24.}
+#'   \item{reps_mod24_uniq}{A vector of unique replicate counts across all time
+#'   points modulo 24.}
+#'   \item{sampling_int_uniq}{A vector of unique sampling intervals between 
+#'   consecutive time points (sorted).}
+#'   \item{tps_sorted}{A vector of the input time points sorted in ascending 
+#'   order.}
+#'   \item{tps_mod24_sorted}{A vector of the time points modulo 24, sorted.}
+#'   \item{input_sort_idx}{The index mapping the original input time points to 
+#'   the sorted time points.}
+#'   \item{input_to_mod24_idx}{The index mapping the original input time points
+#'   to the sorted modulo-24 time points.}
+#'   \item{balanced_reps}{Logical, indicating whether the number of replicates
+#'   per unique time point modulo 24 is identical.}
+#'   \item{balanced}{Logical, indicating whether the design is balanced overall
+#'   (based on replicates, intervals, and distribution).}
+#' }
+#'
+#' @details The function performs several analyses on the provided time points:
+#' \itemize{
+#'   \item Computes the number of replicates for each unique time point.
+#'   \item Computes the number of unique time points and replicates modulo 24.
+#'   \item Checks for balance in replicates, sampling intervals, and 
+#'   distribution within a 24-hour cycle.
+#' }
+#'
+#'   The function is especially useful for analyzing time points in circadian
+#'   rhythm studies, where time points within a 24-hour cycle are often treated
+#'   as equivalent.
+#'
+#' @examples
+#' # Simulate a time point vector
+#' set.seed(123)
+#' timepoints <- rep(seq(0, 44, by = 4), each = 3) |> sample()
+#'
+#' # Analyze time points
+#' results <- analyze_zt(timepoints)
+#'
+#' # View results
+#' print(results)
+#'
+#' @export
+analyze_zt <- function(timepoints) {
+  
+  tps <- timepoints
+  if (!is.numeric(tps)) {
+    stop("Input must be a numeric vector.")
+  }
+  
+  # Step 1: Sort the original time points and get sorting index
+  input_sort_idx <- order(tps)  # Sort index for input time points
+  tps_sorted <- tps[input_sort_idx]
+  
+  # Step 2: Compute modulo 24 of sorted time points
+  tps_mod24 <- tps_sorted %% 24
+  
+  # Step 3: Sort modulo 24 values and get sorting index
+  mod24_sort_idx <- order(tps_mod24)  # Sort index for tps_mod24
+  # Fully sorted modulo-24 time points
+  tps_mod24_sorted <- tps_mod24[mod24_sort_idx]
+  
+  # Step 4: Compose indices to map input time points to sorted modulo-24 time
+  # points
+  input_to_mod24_idx <- input_sort_idx[mod24_sort_idx]
+  
+  # Unique time points (sorted by input time points)
+  tps_unique <- unique(tps_sorted)
+  n_unique <- length(tps_unique)
+  
+  # Replicates per unique time point
+  reps <- as.vector(table(tps_sorted))
+  
+  # Unique modulo 24 time points
+  unique_mod24 <- sort(unique(tps_mod24_sorted))
+  # Total number of unique time points  within a 24-hour period
+  n_unique_mod24 <- length(unique_mod24)
+  
+  # Replicates per unique time point modulo 24
+  reps_mod24 <- as.vector(table(tps_mod24_sorted))
+  
+  # Check if all replicates are identical for modulo 24
+  reps_mod24_uniq <- unique(reps_mod24)
+  balanced_reps <- length(reps_mod24_uniq) == 1L
+  
+  # Check if intervals modulo 24 are equidistant
+  mod24_intervals <- diff(c(unique_mod24, unique_mod24[1])) %% 24
+  balanced_intervals <- length(unique(mod24_intervals)) == 1
+  
+  # Check for even distribution in 24-hour cycle
+  omega <- pi/12
+  sin_cos_sum <- sum(sin(omega*unique_mod24)*cos(omega*unique_mod24))
+  balanced_dist <- abs(sin_cos_sum) < 1e-10
+  
+  # Overall balance check
+  balanced <- balanced_reps && balanced_intervals && balanced_dist
+  
+  # Unique sampling intervals
+  sampling_intervals <- diff(tps_unique)
+  unique_intervals <- unique(sampling_intervals)
+  
+  # Return results
+  structure(
+    list(
+      n_points = length(tps),
+      # number of time points per cycle, for JTK for example
+      n_uniq = n_unique,
+      reps = reps,  # implicitly clear that this is sorted
+      reps_uniq = unique(reps),
+      
+      # Or mod 24, if treating e.g., 2 equivalent to 26 (usually correct 
+      # approach)
+      n_unique_mod24 = n_unique_mod24,
+      reps_mod24 = reps_mod24,
+      reps_mod24_uniq = reps_mod24_uniq,
+      
+      # this is also needed for JTK, and we measure period by normalizing to 
+      # this
+      sampling_int_uniq = unique_intervals,
+      
+      tps_sorted = tps_sorted,
+      tps_mod24_sorted = tps_mod24_sorted,
+      
+      input_sort_idx = input_sort_idx,
+      input_to_mod24_idx = input_to_mod24_idx,
+      
+      balanced_reps = balanced_reps,
+      balanced = balanced
+    ),
+    class = "zt_analysis"
+  )
+}
+
+
+print.zt_analysis <- function(x, ...) {
+  cat("Zeitgeber Time Analysis:\n")
+  cat("-------------------------\n")
+  cat("Total Time Points: ", x$n_points, "\n")
+  cat("Unique Time Points: ", x$n_uniq, "\n")
+  cat("Replicates per Unique Time Point: ", 
+      paste(x$reps, collapse = ", "), "\n")
+  cat("Unique Sampling Intervals: ", 
+      paste(x$sampling_int_uniq, collapse = ", "), "\n")
+  cat("Balanced Design: ", ifelse(x$balanced, "Yes", "No"), "\n")
+  invisible(x)  # Ensure the object is returned invisibly
+}
+
+
+
+
 circ_mean_24 <- function (x) {
   (as.numeric(circular::mean.circular(
     circular::circular(x, units="hours")))) %% 24
