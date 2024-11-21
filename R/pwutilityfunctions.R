@@ -548,6 +548,8 @@ analyze_zt <- function(timepoints) {
   # Return results
   structure(
     list(
+      tspan = c(min(tps), max(tps)),
+      
       n_points = length(tps),
       # number of time points per cycle, for JTK for example
       n_uniq = n_unique,
@@ -577,11 +579,14 @@ analyze_zt <- function(timepoints) {
   )
 }
 
-
+#' @export
 print.zt_analysis <- function(x, ...) {
-  cat("Zeitgeber Time Analysis:\n")
-  cat("-------------------------\n")
+  cat("\n")
+  cat("\t\tZeitgeber Time Analysis:\n")
+  cat("\t\t------------------------\n")
+  cat("\n")
   cat("Total Time Points: ", x$n_points, "\n")
+  cat("Spanning time points", paste0(x$tspan[1], x$tspan[2], sep = "-"), "\n")
   cat("Unique Time Points: ", x$n_uniq, "\n")
   cat("Replicates per Unique Time Point: ", 
       paste(x$reps, collapse = ", "), "\n")
