@@ -547,7 +547,7 @@ analyze_zt <- function(timepoints) {
       tspan = c(min(tps), max(tps)),
       
       n_points = length(tps),
-      # number of time points per cycle, for JTK for example
+      # number of unique time points, for jtkdist for example
       n_uniq = n_unique,
       reps = reps,  # implicitly clear that this is sorted
       reps_uniq = unique(reps),
@@ -586,6 +586,9 @@ print.zt_analysis <- function(x, ...) {
   cat("Unique time points: ", x$n_uniq, "\n")
   cat("Replicates per unique time point: ", 
       paste(x$reps, collapse = ", "), "\n")
+  cat("Unique time points per cycle (mod 24): ", x$n_uniq_mod24, "\n")
+  cat("Replicates per unique time point per cycle (mod 24): ", 
+      paste(x$reps_mod24, collapse = ", "), "\n")
   cat("Unique sampling intervals: ", 
       paste(x$sampling_int_uniq, collapse = ", "), "\n")
   cat("Unique sampling intervals mod 24 (wrapped): ", 
