@@ -554,14 +554,14 @@ analyze_zt <- function(timepoints) {
       
       # Or mod 24, if treating e.g., 2 equivalent to 26 (usually correct 
       # approach)
-      n_unique_mod24 = n_unique_mod24,
+      n_uniq_mod24 = n_unique_mod24,
       reps_mod24 = reps_mod24,
-      reps_mod24_uniq = reps_mod24_uniq,
+      reps_uniq_mod24 = reps_mod24_uniq,
       
       # this is also needed for JTK, and we measure period by normalizing to 
       # this
       sampling_int_uniq = unique(diff(tps_unique)),
-      sampling_int_mod24_uniq = unique(mod24_intervals),
+      sampling_int_uniq_mod24 = unique(mod24_intervals),
       
       tps_sorted = tps_sorted,
       tps_mod24_sorted = tps_mod24_sorted,
@@ -592,7 +592,7 @@ print.zt_analysis <- function(x, ...) {
   cat("Unique sampling intervals: ", 
       paste(x$sampling_int_uniq, collapse = ", "), "\n")
   cat("Unique sampling intervals mod 24 (wrapped): ", 
-      paste(x$sampling_int_mod24_uniq, collapse = ", "), "\n")
+      paste(x$sampling_int_uniq_mod24, collapse = ", "), "\n")
   cat("Balanced design: ", ifelse(x$balanced, "Yes", "No"), "\n")
   invisible(x)  # Ensure the object is returned invisibly
 }
