@@ -1,5 +1,5 @@
 exportPattern("^[[:alpha:]]+")
 
-S3method(print, zt_analysis)
+S3method(print, cosinor_design)
 
 import(magrittr, stats, grDevices, graphics)

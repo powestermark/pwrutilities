@@ -425,15 +425,18 @@ empirical_fdr <- function(val, true_null_indices, ...) {
 
 # Circular helpers --------------------------------------------------------
 
-#' Analyze Zeitgeber Time Points
+#' Analyze Cosinor Design
 #'
 #' This function analyzes a vector of time points and computes various metrics
-#' related to periodic sampling. It handles both absolute and modulo-24 time
-#' representations, making it suitable for circadian rhythm analyses.
+#' related to periodic sampling. It handles both absolute and modulo-per time
+#' representations.
 #'
 #' @param timepoints A numeric vector of time points to analyze.
+#' @param per The cosinor period
+#' @param accuracy Absolute accuracy for determining centeredness and phase
+#'   invariance
 #'
-#' @return An object of class \code{zt_analysis} containing the following 
+#' @return An object of class \code{cosinor_design} containing the following 
 #' elements:
 #' \describe{
 #'   \item{n_points}{The total number of time points.}
@@ -442,38 +445,40 @@ empirical_fdr <- function(val, true_null_indices, ...) {
 #'   point (sorted).}
 #'   \item{reps_uniq}{A vector of unique replicate counts across all time 
 #'   points.}
-#'   \item{n_unique_mod24}{The number of unique time points within a 24-hour 
+#'   \item{n_unique_modper}{The number of unique time points within a per-hour 
 #'   cycle.}
-#'   \item{reps_mod24}{A vector of replicate counts per unique time point 
-#'   modulo 24.}
-#'   \item{reps_mod24_uniq}{A vector of unique replicate counts across all time
-#'   points modulo 24.}
+#'   \item{reps_modper}{A vector of replicate counts per unique time point 
+#'   modulo per.}
+#'   \item{reps_modper_uniq}{A vector of unique replicate counts across all time
+#'   points modulo per.}
 #'   \item{sampling_int_uniq}{A vector of unique sampling intervals between 
 #'   consecutive time points (sorted).}
 #'   \item{tps_sorted}{A vector of the input time points sorted in ascending 
 #'   order.}
-#'   \item{tps_mod24_sorted}{A vector of the time points modulo 24, sorted.}
+#'   \item{tps_modper_sorted}{A vector of the time points modulo per, sorted.}
 #'   \item{input_sort_idx}{The index mapping the original input time points to 
 #'   the sorted time points.}
-#'   \item{input_to_mod24_idx}{The index mapping the original input time points
-#'   to the sorted modulo-24 time points.}
-#'   \item{balanced_reps}{Logical, indicating whether the number of replicates
-#'   per unique time point modulo 24 is identical.}
-#'   \item{balanced}{Logical, indicating whether the design is balanced overall
-#'   (based on replicates, intervals, and distribution).}
+#'   \item{input_to_modper_idx}{The index mapping the original input time points
+#'   to the sorted modulo-per time points.}
+#'   \item{equal_reps}{Logical, indicating whether the number of replicates
+#'   per unique time point modulo per is identical.}
+#'   \item{evenly_spaced}{Logical, indicating whether time points are evenly
+#'   spaced within a cycle, also considering wrap-around from end to beginning.}
+#'   \item{is_centered}{Logical, indicating whether the design is centered.
+#'   Centered designs potentially reach the highest power.}
+#'   \item{is_phaseinv}{Logical, indicating whether the design is
+#'   phase-invariant. Phase-invariant designs lead to power independent of
+#'   phase.}
 #' }
 #'
 #' @details The function performs several analyses on the provided time points:
 #' \itemize{
 #'   \item Computes the number of replicates for each unique time point.
-#'   \item Computes the number of unique time points and replicates modulo 24.
+#'   \item Computes the number of unique time points and replicates modulo per.
 #'   \item Checks for balance in replicates, sampling intervals, and 
-#'   distribution within a 24-hour cycle.
+#'   distribution within a cycle.
 #' }
 #'
-#'   The function is especially useful for analyzing time points in circadian
-#'   rhythm studies, where time points within a 24-hour cycle are often treated
-#'   as equivalent.
 #'
 #' @examples
 #' # Simulate a time point vector
@@ -481,15 +486,15 @@ empirical_fdr <- function(val, true_null_indices, ...) {
 #' timepoints <- rep(seq(0, 44, by = 4), each = 3) |> sample()
 #'
 #' # Analyze time points
-#' results <- analyze_zt(timepoints)
+#' results <- analyze_cosinor_design(timepoints)
 #'
 #' # View results
 #' print(results)
 #'
 #' @export
-analyze_zt <- function(timepoints) {
+analyze_cosinor_design <- function(timepoints, per = 24, accuracy = 1e-4) {
   
-  tps <- timepoints
+  tps <- timepoints[!is.na(timepoints)]
   if (!is.numeric(tps)) {
     stop("Input must be a numeric vector.")
   }
@@ -498,17 +503,17 @@ analyze_zt <- function(timepoints) {
   input_sort_idx <- order(tps)  # Sort index for input time points
   tps_sorted <- tps[input_sort_idx]
   
-  # Step 2: Compute modulo 24 of sorted time points
-  tps_mod24 <- tps_sorted %% 24
+  # Step 2: Compute modulo per of sorted time points
+  tps_modper <- tps_sorted %% per
   
-  # Step 3: Sort modulo 24 values and get sorting index
-  mod24_sort_idx <- order(tps_mod24)  # Sort index for tps_mod24
-  # Fully sorted modulo-24 time points
-  tps_mod24_sorted <- tps_mod24[mod24_sort_idx]
+  # Step 3: Sort modulo per values and get sorting index
+  modper_sort_idx <- order(tps_modper)  # Sort index for tps_modper
+  # Fully sorted modulo-per time points
+  tps_modper_sorted <- tps_modper[modper_sort_idx]
   
-  # Step 4: Compose indices to map input time points to sorted modulo-24 time
+  # Step 4: Compose indices to map input time points to sorted modulo-per time
   # points
-  input_to_mod24_idx <- input_sort_idx[mod24_sort_idx]
+  input_to_modper_idx <- input_sort_idx[modper_sort_idx]
   
   # Unique time points (sorted by input time points)
   tps_unique <- unique(tps_sorted)
@@ -517,29 +522,32 @@ analyze_zt <- function(timepoints) {
   # Replicates per unique time point
   reps <- as.vector(table(tps_sorted))
   
-  # Unique modulo 24 time points
-  tps_unique_mod24 <- sort(unique(tps_mod24_sorted))
-  # Total number of unique time points  within a 24-hour period
-  n_unique_mod24 <- length(tps_unique_mod24)
+  # Unique modulo per time points
+  tps_unique_modper <- sort(unique(tps_modper_sorted))
+  # Total number of unique time points  within a per-hour period
+  n_unique_modper <- length(tps_unique_modper)
   
-  # Replicates per unique time point modulo 24
-  reps_mod24 <- as.vector(table(tps_mod24_sorted))
+  # Replicates per unique time point modulo per
+  reps_modper <- as.vector(table(tps_modper_sorted))
   
-  # Check if all replicates are identical for modulo 24
-  reps_mod24_uniq <- unique(reps_mod24)
-  balanced_reps <- length(reps_mod24_uniq) == 1L
+  # Check if all replicates are identical for modulo per
+  reps_modper_uniq <- unique(reps_modper)
+  equal_reps <- length(reps_modper_uniq) == 1L
   
-  # Check if intervals modulo 24 are equidistant
-  mod24_intervals <- diff(c(tps_unique_mod24, tps_unique_mod24[1])) %% 24
-  balanced_intervals <- length(unique(mod24_intervals)) == 1
+  # Check if intervals modulo per are equidistant
+  modper_intervals <- diff(c(tps_unique_modper, tps_unique_modper[1])) %% per
+  evenly_spaced <- length(unique(modper_intervals)) == 1
   
-  # Check for even distribution in 24-hour cycle
-  omega <- pi/12
-  sin_cos_sum <- sum(sin(omega*tps_unique_mod24)*cos(omega*tps_unique_mod24))
-  balanced_dist <- abs(sin_cos_sum) < 1e-10
+   
+  # Check for centeredness (maximal sum of eigenvalues) and phase invariance
+  omega <- 2*pi/per
+  harms <- cbind(cos(omega*tps_sorted), sin(omega*tps_sorted))
+  csmeans <- colMeans(harms)
+  cscov <- crossprod(harms)/length(tps_sorted) - outer(csmeans, csmeans)
   
-  # Overall balance check
-  balanced <- balanced_reps && balanced_intervals && balanced_dist
+  is_centered <- all(csmeans < accuracy)
+  is_phaseinv <- abs(diff(eigen(cscov)$values)) < accuracy
+  
   
   # Return results
   structure(
@@ -552,48 +560,54 @@ analyze_zt <- function(timepoints) {
       reps = reps,  # implicitly clear that this is sorted
       reps_uniq = unique(reps),
       
-      # Or mod 24, if treating e.g., 2 equivalent to 26 (usually correct 
+      # Or mod per, if treating e.g., 2 equivalent to 26 (usually correct 
       # approach)
-      n_uniq_mod24 = n_unique_mod24,
-      reps_mod24 = reps_mod24,
-      reps_uniq_mod24 = reps_mod24_uniq,
+      n_uniq_modper = n_unique_modper,
+      reps_modper = reps_modper,
+      reps_uniq_modper = reps_modper_uniq,
       
       # this is also needed for JTK, and we measure period by normalizing to 
       # this
       sampling_int_uniq = unique(diff(tps_unique)),
-      sampling_int_uniq_mod24 = unique(mod24_intervals),
+      sampling_int_uniq_modper = unique(modper_intervals),
       
       tps_sorted = tps_sorted,
-      tps_mod24_sorted = tps_mod24_sorted,
+      tps_modper_sorted = tps_modper_sorted,
       
       input_sort_idx = input_sort_idx,
-      input_to_mod24_idx = input_to_mod24_idx,
+      input_to_modper_idx = input_to_modper_idx,
       
-      balanced_reps = balanced_reps,
-      balanced = balanced
+      equal_reps = equal_reps,
+      evenly_spaced = evenly_spaced,
+      is_centered = is_centered,
+      is_phaseinv = is_phaseinv
     ),
-    class = "zt_analysis"
+    class = "cosinor_design"
   )
 }
 
-print.zt_analysis <- function(x, ...) {
+print.cosinor_design <- function(x, ...) {
   cat("\n")
-  cat("\t\tZeitgeber time analysis:\n")
-  cat("\t\t------------------------\n")
+  cat("\t\tCosinor experimental design:\n")
+  cat("\t\t---------------------------\n")
   cat("\n")
   cat("Total time points: ", x$n_points, "\n")
   cat("Spanning time points: ", paste(x$tspan, collapse = " - "), "\n")
   cat("Unique time points: ", x$n_uniq, "\n")
   cat("Replicates per unique time point: ", 
       paste(x$reps, collapse = ", "), "\n")
-  cat("Unique time points per cycle (mod 24): ", x$n_uniq_mod24, "\n")
-  cat("Replicates per unique time point per cycle (mod 24): ", 
-      paste(x$reps_mod24, collapse = ", "), "\n")
+  cat("Unique time points per cycle (mod per): ", x$n_uniq_modper, "\n")
+  cat("Replicates per unique time point per cycle (mod per): ", 
+      paste(x$reps_modper, collapse = ", "), "\n")
   cat("Unique sampling intervals: ", 
       paste(x$sampling_int_uniq, collapse = ", "), "\n")
-  cat("Unique sampling intervals mod 24 (wrapped): ", 
-      paste(x$sampling_int_uniq_mod24, collapse = ", "), "\n")
-  cat("Balanced design: ", ifelse(x$balanced, "Yes", "No"), "\n")
+  cat("Unique sampling intervals mod per (wrapped): ", 
+      paste(x$sampling_int_uniq_modper, collapse = ", "), "\n")
+  cat("Equal number of replicates per time point: ", 
+      ifelse(x$equal_reps, "Yes", "No"), "\n")
+  cat("Evenly spaced design: ", ifelse(x$evenly_spaced, "Yes", "No"), "\n")
+  cat("Centered design: ", ifelse(x$is_centered, "Yes", "No"), "\n")
+  cat("Phase-invariant design: ", ifelse(x$is_phaseinv, "Yes", "No"), "\n")
   invisible(x)  # Ensure the object is returned invisibly
 }
 
