@@ -47,6 +47,30 @@ installed_date <- function (lib_index = 1L, mtime_first = FALSE) {
 
 # String utilities --------------------------------------------------------
 
+#' Convert Zeitgeber Time Points to Character Strings with Custom Prefix
+#'
+#' Translates numeric Zeitgeber time points into character strings formatted as "\{prefix\}\<time\>_\<replicate\>".
+#'
+#' @param time_points A numeric vector of Zeitgeber time points.
+#' @param prefix A character string to prefix each time point. Defaults to "ZT".
+#'
+#' @return A character vector with formatted Zeitgeber strings.
+#'
+#' @examples
+#' ztct_string(c(0, 0, 2, 2, 4, 4))
+#' # Returns: "ZT0_1" "ZT0_2" "ZT2_1" "ZT2_2" "ZT4_1" "ZT4_2"
+#'
+#' ztct_string(c(0, 0, 2, 2, 4, 4), prefix = "CT")
+#' # Returns: "CT0_1" "CT0_2" "CT2_1" "CT2_2" "CT4_1" "CT4_2"
+#'
+#' @export
+ztct_string <- function(time_points, prefix = "ZT") {
+  paste0(
+    prefix, time_points, "_",
+    stats::ave(time_points, time_points, FUN = seq_along)
+  )
+}
+
 returngoodmgi <- function(mgis) {
   ## assumes a vector, returns the "best" mgi symbol
   good <- grep("[0-9]Rik$", mgis, invert=TRUE)
