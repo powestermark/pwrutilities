@@ -49,7 +49,8 @@ installed_date <- function (lib_index = 1L, mtime_first = FALSE) {
 
 #' Convert Zeitgeber Time Points to Character Strings with Custom Prefix
 #'
-#' Translates numeric Zeitgeber time points into character strings formatted as "\{prefix\}\<time\>_\<replicate\>".
+#' Translates numeric Zeitgeber time points into character strings formatted as 
+#' "{prefix}<time>_<replicate>".
 #'
 #' @param time_points A numeric vector of Zeitgeber time points.
 #' @param prefix A character string to prefix each time point. Defaults to "ZT".

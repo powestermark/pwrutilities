@@ -15,7 +15,8 @@ ztct_string(time_points, prefix = "ZT")
 A character vector with formatted Zeitgeber strings.
 }
 \description{
-Translates numeric Zeitgeber time points into character strings formatted as "\{prefix\}\<time\>_\<replicate\>".
+Translates numeric Zeitgeber time points into character strings formatted as 
+"{prefix}<time>_<replicate>".
 }
 \examples{
 ztct_string(c(0, 0, 2, 2, 4, 4))
